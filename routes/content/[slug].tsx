@@ -1,27 +1,12 @@
 import type { Content } from "../../types/content.ts";
 import { formatDateTime } from "../../utils/date.ts";
 
-export default async function ContentPage(req: Request, ctx: any) {
-  const slug = ctx.params?.slug;
-  
-  if (!slug) {
-    return (
-      <>
-        <title>ไม่พบเนื้อหา | My Fresh App</title>
-        
-        <div class="min-h-[60vh] flex items-center justify-center">
-          <div class="text-center">
-            <h1 class="text-4xl font-bold mb-4">404</h1>
-            <p class="text-xl mb-4">ไม่พบเนื้อหาที่คุณต้องการ</p>
-            <a href="/" class="btn btn-primary">กลับหน้าแรก</a>
-          </div>
-        </div>
-      </>
-    );
-  }
+export default async function ContentPage(req: Request): Promise<JSX.Element> {
+  const url = new URL(req.url);
+  const slug = url.pathname.split('/').pop(); // ดึง slug จาก URL
   
   // Fetch from API
-  const apiUrl = new URL(`/api/contents/${slug}`, req.url);
+  const apiUrl = new URL(`/api/content/${slug}`, url.origin);
   
   let content: Content;
   try {

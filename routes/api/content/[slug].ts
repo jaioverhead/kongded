@@ -1,14 +1,13 @@
-import { RouteContext } from "$fresh/server.ts";
 import type { Content } from "../../../types/content.ts";
 
 // Simulated database
-const contentDB: Content[] = [
+const contentsDB: Content[] = [
   {
     id: 1,
     slug: "web-design-modern",
     title: "การออกแบบเว็บไซต์สมัยใหม่",
     description: "เทคนิคและเครื่องมือสำหรับการออกแบบเว็บไซต์ที่ทันสมัยและใช้งานง่าย",
-    content: `
+    detail: `
       <p class="mb-4">การออกแบบเว็บไซต์ในยุคปัจจุบันได้พัฒนาไปอย่างมาก ไม่ใช่แค่การทำให้สวยงามเท่านั้น แต่ยังต้องคำนึงถึงประสบการณ์ผู้ใช้ (User Experience) และการใช้งานที่ง่ายดาย (Usability) อีกด้วย</p>
       
       <h3 class="text-xl font-bold mb-3 mt-6">หลักการสำคัญ</h3>
@@ -38,7 +37,7 @@ const contentDB: Content[] = [
     slug: "mobile-app-development",
     title: "พัฒนาแอปพลิเคชันมือถือ",
     description: "แนวทางการสร้างแอปมือถือที่มีประสิทธิภาพและประสบการณ์ผู้ใช้ที่ดี",
-    content: `
+    detail: `
       <p class="mb-4">การพัฒนาแอปพลิเคชันมือถือในปัจจุบันมีหลายแพลตฟอร์มให้เลือก ทั้ง iOS, Android และ Cross-platform</p>
       
       <h3 class="text-xl font-bold mb-3 mt-6">แพลตฟอร์มยอดนิยม</h3>
@@ -66,7 +65,7 @@ const contentDB: Content[] = [
     slug: "digital-marketing",
     title: "การตลาดดิจิทัล",
     description: "กลยุทธ์การตลาดออนไลน์ที่ช่วยเพิ่มยอดขายและสร้างแบรนด์",
-    content: `
+    detail: `
       <p class="mb-4">การตลาดดิจิทัลเป็นสิ่งสำคัญในยุคที่ผู้คนใช้เวลาออนไลน์เป็นส่วนใหญ่ การทำการตลาดแบบดั้งเดิมอาจไม่เพียงพออีกต่อไป</p>
       
       <h3 class="text-xl font-bold mb-3 mt-6">ช่องทางการตลาดดิจิทัล</h3>
@@ -92,20 +91,20 @@ const contentDB: Content[] = [
   }
 ];
 
-export const handler = {
-  GET(_req: Request, ctx: RouteContext) {
-    const { slug } = ctx.params;
-    const content = contentDB.find(a => a.slug === slug);
+export default function handler(req: Request): Response {
+  const url = new URL(req.url);
+  const slug = url.pathname.split('/').pop(); // ดึง slug จาก URL
+  
+  const content = contentsDB.find(c => c.slug === slug);
 
-    if (!content) {
-      return new Response(JSON.stringify({ error: "Content not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify(content), {
+  if (!content) {
+    return new Response(JSON.stringify({ error: "Content not found" }), {
+      status: 404,
       headers: { "Content-Type": "application/json" },
     });
-  },
-};
+  }
+
+  return new Response(JSON.stringify(content), {
+    headers: { "Content-Type": "application/json" },
+  });
+}
