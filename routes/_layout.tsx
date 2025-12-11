@@ -14,11 +14,13 @@ export default function Layout({ Component, state }: LayoutProps) {
       <body class="min-h-screen flex flex-col">
         <DrawerSidebar>
           <Header />
-          
-          <main class="flex-1 p-6 bg-base-200">
-            <Component />
+
+          <main class="flex-1 p-6 bg-base-200 min-h-screen">
+            <div class="container mx-auto">
+              <Component />
+            </div>
           </main>
-          
+
           <Footer />
         </DrawerSidebar>
       </body>
