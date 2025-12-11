@@ -91,20 +91,24 @@ const contentsDB: Content[] = [
   }
 ];
 
-export default function handler(req: Request): Response {
-  const url = new URL(req.url);
-  const slug = url.pathname.split('/').pop(); // ดึง slug จาก URL
-  
-  const content = contentsDB.find(c => c.slug === slug);
+export const handler = {
+  GET(req: Request): Response {
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split('/');
+    const slug = pathParts[pathParts.length - 1];
+    
+    const content = contentsDB.find(c => c.slug === slug);
 
-  if (!content) {
-    return new Response(JSON.stringify({ error: "Content not found" }), {
-      status: 404,
+    if (!content) {
+      return new Response(JSON.stringify({ error: "Content not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify(content), {
+      status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  }
-
-  return new Response(JSON.stringify(content), {
-    headers: { "Content-Type": "application/json" },
-  });
-}
+  },
+};
