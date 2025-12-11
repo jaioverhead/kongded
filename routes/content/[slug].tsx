@@ -1,23 +1,46 @@
-import { FreshContext } from "$fresh/server.ts";
 import type { Content } from "../../types/content.ts";
-import { formatDateTime, formatDate } from "../../utils/date.ts";
+import { formatDateTime } from "../../utils/date.ts";
 
-export default async function ContentPage(req: Request, ctx: FreshContext) {
-  const { slug } = ctx.params;
+export default async function ContentPage(req: Request, ctx: any) {
+  const slug = ctx.params?.slug;
   
-  // Fetch from API
-  const apiUrl = new URL(`/api/content/${slug}`, req.url);
-  const response = await fetch(apiUrl);
-  
-  if (!response.ok) {
+  if (!slug) {
     return (
       <>
-        <title>ไม่พบบทความ | My Fresh App</title>
+        <title>ไม่พบเนื้อหา | My Fresh App</title>
         
         <div class="min-h-[60vh] flex items-center justify-center">
           <div class="text-center">
             <h1 class="text-4xl font-bold mb-4">404</h1>
-            <p class="text-xl mb-4">ไม่พบบทความที่คุณต้องการ</p>
+            <p class="text-xl mb-4">ไม่พบเนื้อหาที่คุณต้องการ</p>
+            <a href="/" class="btn btn-primary">กลับหน้าแรก</a>
+          </div>
+        </div>
+      </>
+    );
+  }
+  
+  // Fetch from API
+  const apiUrl = new URL(`/api/contents/${slug}`, req.url);
+  
+  let content: Content;
+  try {
+    const response = await fetch(apiUrl);
+    
+    if (!response.ok) {
+      throw new Error('Content not found');
+    }
+    
+    content = await response.json();
+  } catch (error) {
+    return (
+      <>
+        <title>ไม่พบเนื้อหา | My Fresh App</title>
+        
+        <div class="min-h-[60vh] flex items-center justify-center">
+          <div class="text-center">
+            <h1 class="text-4xl font-bold mb-4">404</h1>
+            <p class="text-xl mb-4">ไม่พบเนื้อหาที่คุณต้องการ</p>
             <a href="/" class="btn btn-primary">กลับหน้าแรก</a>
           </div>
         </div>
@@ -25,14 +48,11 @@ export default async function ContentPage(req: Request, ctx: FreshContext) {
     );
   }
 
-  const content: Content = await response.json();
-
   return (
     <>
       <title>{content.title} | My Fresh App</title>
       
       <div class="min-h-[60vh]">
-        {/* Hero Image */}
         <div class="mb-8 -mx-6 -mt-6">
           <img 
             src={content.image} 
@@ -41,27 +61,22 @@ export default async function ContentPage(req: Request, ctx: FreshContext) {
           />
         </div>
 
-        {/* Content Card */}
         <div class="card bg-base-100 shadow-xl">
           <div class="card-body">
-            {/* Breadcrumb */}
             <div class="text-sm breadcrumbs mb-4">
               <ul>
                 <li><a href="/">หน้าแรก</a></li>
-                <li><a href="/#">บทความ</a></li>
+                <li><a href="/#">เนื้อหา</a></li>
                 <li>{content.title}</li>
               </ul>
             </div>
 
-            {/* Category Badge */}
             <div class="mb-4">
               <span class="badge badge-primary">{content.category}</span>
             </div>
 
-            {/* Title */}
             <h1 class="text-3xl md:text-4xl font-bold mb-4">{content.title}</h1>
             
-            {/* Meta Info */}
             <div class="flex flex-wrap gap-4 text-sm opacity-70 mb-4">
               <div class="flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -84,14 +99,12 @@ export default async function ContentPage(req: Request, ctx: FreshContext) {
               </div>
             </div>
 
-            {/* Tags */}
             <div class="flex flex-wrap gap-2 mb-6">
               {content.tags.map((tag) => (
                 <span key={tag} class="badge badge-outline">{tag}</span>
               ))}
             </div>
 
-            {/* Description */}
             <div class="alert alert-info mb-6">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -101,20 +114,17 @@ export default async function ContentPage(req: Request, ctx: FreshContext) {
 
             <div class="divider"></div>
 
-            {/* Content */}
             <div 
               class="prose max-w-none"
-              dangerouslySetInnerHTML={{ __html: content.content }}
+              dangerouslySetInnerHTML={{ __html: content.detail }}
             />
 
             <div class="divider"></div>
 
-            {/* Updated Info */}
             <div class="text-sm opacity-60 mb-4">
               อัปเดตล่าสุด: {formatDateTime(content.updated_at)}
             </div>
 
-            {/* Actions */}
             <div class="flex gap-4">
               <a href="/" class="btn btn-outline">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
