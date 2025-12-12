@@ -1,11 +1,11 @@
 import type { Content } from "../../types/content.ts";
 import { formatDateTime } from "../../utils/date.ts";
+import ShareButtons from "../../islands/ShareButtons.tsx";
 
 export default async function ContentPage(req: Request): Promise<JSX.Element> {
   const url = new URL(req.url);
-  const slug = url.pathname.split('/').pop(); // ดึง slug จาก URL
+  const slug = url.pathname.split('/').pop();
   
-  // Fetch from API
   const apiUrl = new URL(`/api/content/${slug}`, url.origin);
   
   let content: Content;
@@ -31,6 +31,21 @@ export default async function ContentPage(req: Request): Promise<JSX.Element> {
         </div>
       </>
     );
+  }
+
+  // Fetch related content
+  const relatedApiUrl = new URL(`/api/contents/category/${content.category}`, url.origin);
+  let relatedContents: Content[] = [];
+  
+  try {
+    const relatedResponse = await fetch(relatedApiUrl);
+    if (relatedResponse.ok) {
+      const allRelated = await relatedResponse.json();
+      // กรองเอาที่ไม่ใช่เนื้อหาปัจจุบัน และเอาแค่ 3 รายการ
+      relatedContents = allRelated.filter((c: Content) => c.id !== content.id).slice(0, 3);
+    }
+  } catch (error) {
+    console.error('Failed to fetch related content:', error);
   }
 
   return (
@@ -75,6 +90,13 @@ export default async function ContentPage(req: Request): Promise<JSX.Element> {
                 </svg>
                 <span>{formatDateTime(content.created_at)}</span>
               </div>
+              <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <span>{content.views.toLocaleString()} ครั้ง</span>
+              </div>
             </div>
 
             <div class="flex flex-wrap gap-2 mb-6">
@@ -99,17 +121,61 @@ export default async function ContentPage(req: Request): Promise<JSX.Element> {
 
             <div class="divider"></div>
 
-            <div class="text-sm opacity-60 mb-4">
-              อัปเดตล่าสุด: {formatDateTime(content.updated_at)}
+            {/* Updated time & Share buttons */}
+            <div class="flex justify-between items-center mb-6">
+              <div class="text-sm opacity-60">
+                อัปเดตล่าสุด: {formatDateTime(content.updated_at)}
+              </div>
+              <ShareButtons title={content.title} url={url.href} />
             </div>
 
+            {/* Related Content */}
+            {relatedContents.length > 0 && (
+              <>
+                <div class="divider"></div>
+                
+                <h2 class="text-2xl font-bold mb-4">เนื้อหาที่เกี่ยวข้อง</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {relatedContents.map((related) => (
+                    <a 
+                      key={related.id}
+                      href={`/content/${related.slug}`}
+                      class="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow"
+                    >
+                      <figure>
+                        <img 
+                          src={related.image} 
+                          alt={related.title}
+                          class="w-full h-40 object-cover"
+                        />
+                      </figure>
+                      <div class="card-body p-4">
+                        <h3 class="card-title text-base">{related.title}</h3>
+                        <p class="text-sm opacity-70 line-clamp-2">{related.description}</p>
+                        <div class="flex items-center gap-2 text-xs opacity-60 mt-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          <span>{related.views.toLocaleString()} ครั้ง</span>
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </>
+            )}
+
+            <div class="divider"></div>
+
             <div class="flex gap-4">
-              <button class="btn btn-primary">
+              <a href="/" class="btn btn-outline">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                แชร์
-              </button>
+                กลับหน้าแรก
+              </a>
             </div>
           </div>
         </div>
