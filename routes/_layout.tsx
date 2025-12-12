@@ -9,6 +9,7 @@ export default function Layout({ Component, state }: LayoutProps) {
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="robots" content="index, follow"/>
       </head>
       
       <body class="min-h-screen flex flex-col">

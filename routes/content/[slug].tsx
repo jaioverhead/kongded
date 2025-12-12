@@ -34,15 +34,26 @@ export default async function ContentPage(req: Request): Promise<JSX.Element> {
   }
 
   // Fetch related content
-  const relatedApiUrl = new URL(`/api/contents/category/${content.category}`, url.origin);
+  const relatedApiUrl = new URL(`/api/content/category/${content.category}`, url.origin);
   let relatedContents: Content[] = [];
-  
+
   try {
     const relatedResponse = await fetch(relatedApiUrl);
     if (relatedResponse.ok) {
-      const allRelated = await relatedResponse.json();
-      // กรองเอาที่ไม่ใช่เนื้อหาปัจจุบัน และเอาแค่ 3 รายการ
-      relatedContents = allRelated.filter((c: Content) => c.id !== content.id).slice(0, 3);
+      const responseData = await relatedResponse.json();
+      
+      // ตรวจสอบว่า response เป็น object ที่มี data array หรือเป็น array โดยตรง
+      const allRelated = Array.isArray(responseData) 
+        ? responseData 
+        : (responseData.data || []);
+      
+    // กรองเอาที่ slug ไม่ซ้ำกับเนื้อหาปัจจุบัน
+    const filtered = allRelated.filter((c: Content) => c.slug !== content.slug);
+    
+    // สุ่มลำดับแล้วเอาแค่ 3 รายการ
+    relatedContents = filtered
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 3);
     }
   } catch (error) {
     console.error('Failed to fetch related content:', error);
@@ -50,8 +61,36 @@ export default async function ContentPage(req: Request): Promise<JSX.Element> {
 
   return (
     <>
+      {/* Basic Meta Tags */}
       <title>{content.title} | My Fresh App</title>
+      <meta name="description" content={content.description} />
+      <link rel="canonical" href={url.href} />
+
+      {/* Open Graph Meta Tags (Facebook, LinkedIn) */}
+      <meta property="og:type" content="article" />
+      <meta property="og:title" content={content.title} />
+      <meta property="og:description" content={content.description} />
+      <meta property="og:image" content={content.image} />
+      <meta property="og:url" content={url.href} />
+      <meta property="og:site_name" content="My Fresh App" />
+      <meta property="article:published_time" content={content.created_at} />
+      <meta property="article:modified_time" content={content.updated_at} />
+      <meta property="article:author" content={content.author} />
+      <meta property="article:section" content={content.category} />
+      {content.tags.map((tag) => (
+        <meta key={tag} property="article:tag" content={tag} />
+      ))}
+
+      {/* Twitter Card Meta Tags */}
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={content.title} />
+      <meta name="twitter:description" content={content.description} />
+      <meta name="twitter:image" content={content.image} />
       
+      {/* Additional SEO Meta Tags */}
+      <meta name="author" content={content.author} />
+      <meta name="keywords" content={content.tags.join(', ')} />
+
       <div class="min-h-[60vh]">
         <div class="mb-8 -mx-6 -mt-6">
           <img 
@@ -167,16 +206,6 @@ export default async function ContentPage(req: Request): Promise<JSX.Element> {
               </>
             )}
 
-            <div class="divider"></div>
-
-            <div class="flex gap-4">
-              <a href="/" class="btn btn-outline">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                กลับหน้าแรก
-              </a>
-            </div>
           </div>
         </div>
       </div>
