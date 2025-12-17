@@ -1,7 +1,13 @@
-export default function About() {
+import { Head } from "fresh/runtime";
+import { define } from "../utils.ts";
+
+export default define.page((ctx) => {
   return (
     <>
-      <title>เกี่ยวกับเรา | My Fresh App</title>
+      <Head>
+        <title>เกี่ยวกับเรา | My Fresh App</title>
+        <meta name="description" content="เกี่ยวกับเรา | My Fresh App" />
+      </Head>
       
       <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
@@ -19,4 +25,4 @@ export default function About() {
       </div>
     </>
   );
-}
+});
