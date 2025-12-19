@@ -3,10 +3,13 @@ import type { Content } from "../../types/content.ts";
 import { formatDateTime } from "../../utils/date.ts";
 import ShareButtons from "../../islands/ShareButtons.tsx";
 import ContentCard from "../../components/ContentCard.tsx";
+import { define } from "../../utils.ts";
+import NotFoundPage from "../_404.tsx";
 
-export const handler = {
-  async GET(_req: Request, ctx: any) {
-    const url = new URL(_req.url);
+export const handler = define.handlers({
+  async GET(ctx) {
+    const req = ctx.req;
+    const url = new URL(req.url);
     const slug = url.pathname.split('/').pop();
     
     const apiUrl = new URL(`/api/content/${slug}`, url.origin);
@@ -15,7 +18,11 @@ export const handler = {
       const response = await fetch(apiUrl);
       
       if (!response.ok) {
-        throw new Error('Content not found');
+        return {
+          data: { notFound: true, url: url.href },
+          status: 404
+        };
+        //return new Response(null, { status: 404 });
       }
       
       const content = await response.json();
@@ -43,32 +50,20 @@ export const handler = {
         data: { content, relatedContents, url: url.href }
       };
     } catch (error) {
-      return {
-        data: { content: null, relatedContents: [], url: url.href }
-      };
+        console.error(error);
+        return {
+          data: { notFound: true, url: url.href },
+          status: 404
+        };
     }
   }
-};
+});
 
-export default function ContentPage({ data }: any) {
-  if (!data.content) {
-    return (
-      <>
-        <Head>
-          <title>ไม่พบเนื้อหา | My Fresh App</title>
-          <meta name="description" content="ไม่พบเนื้อหาที่คุณต้องการ" />
-        </Head>
-        <div class="min-h-[60vh] flex items-center justify-center">
-          <div class="text-center">
-            <h1 class="text-4xl font-bold mb-4">404</h1>
-            <p class="text-xl mb-4">ไม่พบเนื้อหาที่คุณต้องการ</p>
-            <a href="/" class="btn btn-primary">กลับหน้าแรก</a>
-          </div>
-        </div>
-      </>
-    );
+export default define.page(function ContentPage({ data }) {
+
+  if (data.notFound) {
+    return <NotFoundPage url={data.url} />;
   }
-
   const { content, relatedContents, url } = data;
 
   return (
@@ -192,4 +187,4 @@ export default function ContentPage({ data }: any) {
     </div>
     </>
   );
-}
+});
